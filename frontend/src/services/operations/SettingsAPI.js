@@ -55,10 +55,11 @@ export function updateProfile(token, formData) {
       if (!response.data.success) {
         throw new Error(response.data.message)
       }
+      console.log("working")
       const userImage = response.data.updatedUserDetails.image
         ? response.data.updatedUserDetails.image
         : `https://api.dicebear.com/5.x/initials/svg?seed=${response.data.updatedUserDetails.firstName} ${response.data.updatedUserDetails.lastName}`
-      dispatch(
+        dispatch(
         setUser({ ...response.data.updatedUserDetails, image: userImage })
       )
       toast.success("Profile Updated Successfully")
@@ -76,6 +77,7 @@ export async function changePassword(token, formData) {
     const response = await apiConnector("POST", CHANGE_PASSWORD_API, formData, {
       Authorization: `Bearer ${token}`,
     })
+    console.log("trying")
     console.log("CHANGE_PASSWORD_API API RESPONSE............", response)
 
     if (!response.data.success) {

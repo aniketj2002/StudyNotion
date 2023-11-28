@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const mailSender = require("../utils/mailSender");
 const { passwordUpdated } = require("../mail/templates/passwordUpdate");
-const Profile=require("../models/Profile")
+const Profile = require("../models/Profile");
 require("dotenv").config();
 
 //send otp
@@ -111,8 +111,8 @@ exports.signUp = async (req, res) => {
         message: "otp not found",
       });
     } else if (recentOtp[0].otp !== otp) {
-      console.log(otp)
-      console.log(recentOtp)
+      console.log(otp);
+      console.log(recentOtp);
       return res.status(400).json({
         success: false,
         message: "Invalid Otp",
@@ -120,9 +120,9 @@ exports.signUp = async (req, res) => {
     }
     //hash user password
     const hashPass = await bcrypt.hash(password, 10);
-    
+
     let approved = "";
-		approved === "Instructor" ? (approved = false) : (approved = true);
+    approved === "Instructor" ? (approved = false) : (approved = true);
 
     // create entry in db
     const profileDetails = await Profile.create({
@@ -132,12 +132,12 @@ exports.signUp = async (req, res) => {
       contactNumber: null,
     });
     const user = await User.create({
-      firstName:firstName,
-      lastName:lastName,
-      email:email,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
       password: hashPass,
-      accountType:accountType,
-      approved:approved,
+      accountType: accountType,
+      approved: approved,
       additionalDetails: profileDetails._id,
       contactNumber,
       image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`,
@@ -155,7 +155,6 @@ exports.signUp = async (req, res) => {
     });
   }
 };
-
 
 // login
 
@@ -197,7 +196,7 @@ exports.login = async (req, res) => {
       user.password = undefined;
 
       //create cookie
-      const options = { 
+      const options = {
         expiresIn: new Date(Date.now() + 3 * 60 * 60 * 1000 * 24),
       };
       res.cookie("token", token, options).status(200).json({
@@ -225,7 +224,16 @@ exports.login = async (req, res) => {
 exports.changePassword = async (req, res) => {
   try {
     // fetch data
-    const { password, newPassword, confirmPassword } = req.body;
+    console.log("helloooooooo");
+    const { oldPassword: password, newPassword, confirmPassword } = req.body;
+    console.log(
+      "update password test ::::::" +
+        password +
+        " " +
+        newPassword +
+        " " +
+        confirmPassword
+    );
     const user = await User.findById(req.user.id);
 
     //validating data
@@ -247,51 +255,49 @@ exports.changePassword = async (req, res) => {
       //updating new passowrd in db
       const passUpdate = await User.findByIdAndUpdate(
         req.user.id,
-        { passowrd: hashPass },{new:true}
+        { passowrd: hashPass },
+        { new: true }
       );
+
       if (!passUpdate) {
         return res.status(500).json({
           success: false,
           message: "error occured while updating the password",
         });
       }
-    } 
-    else {
-       return res.status(401).json({
+      // Send notification email
+      try {
+        const emailResponse = await mailSender(
+          passUpdate.email,
+          "Password for your account has been updated",
+          passwordUpdated(
+            passUpdate.email,
+            `Password updated successfully for ${passUpdate.firstName} ${passUpdate.lastName}`
+          )
+        );
+        console.log("Email sent successfully:", emailResponse.response);
+      } catch (error) {
+        // If there's an error sending the email, log the error and return a 500 (Internal Server Error) error
+        console.error("Error occurred while sending email:", error);
+        return res.status(500).json({
+          success: false,
+          message: "Error occurred while sending email",
+          error: error.message,
+        });
+      }
+
+      //return response
+      return res.status(200).json({
+        success: true,
+        message: "password updated successfully",
+      });
+    } else {
+      return res.status(401).json({
         success: false,
         message: "Ivalid password",
       });
     }
-
-    // Send notification email
-		try {
-			const emailResponse = await mailSender(
-				passUpdate.email,
-				passwordUpdated(
-					passUpdate.email,
-					`Password updated successfully for ${passUpdate.firstName} ${passUpdate.lastName}`
-				)
-			);
-			console.log("Email sent successfully:", emailResponse.response);
-		} 
-        catch (error) {
-
-			// If there's an error sending the email, log the error and return a 500 (Internal Server Error) error
-			console.error("Error occurred while sending email:", error);
-			return res.status(500).json({
-				success: false,
-				message: "Error occurred while sending email",
-				error: error.message,
-			});
-		}
-
-    //return response
-    return res.status(200).json({
-        success: true,
-        message: "password updated successfully",
-      });
-  } 
-  catch (error) {
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: "error occured while updating the password" + error.message,

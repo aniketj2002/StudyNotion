@@ -8,7 +8,7 @@ exports.auth = async (req, res, next) => {
     const token =
     req.cookies.token ||
     req.body.token ||
-    req.header("Authorisation").replace("Bearer ", "");
+    req.header("Authorization").replace("Bearer ", "");
     
     // checking if token is present or not
     if (!token) {
@@ -20,7 +20,7 @@ exports.auth = async (req, res, next) => {
     // verifying the token
     try {
       const decode =  jwt.verify(token, process.env.JWT_SECRET);
-      console.log(decode);
+      console.log("decode"+decode);
       req.user = decode;
     } catch (error) {
       //verification issue

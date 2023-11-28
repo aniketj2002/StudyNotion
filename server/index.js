@@ -11,15 +11,15 @@ const cors=require("cors");
 const {cloudinaryConnect}=require("./config/cloudinary");
 const fileUpload= require("express-fileupload");
 const dotenv = require("dotenv");
-dotenv.config();
 const port = process.env.port||4000;
+dotenv.config();
 database.connect();
 app.use(express.json());
 app.use(cookieParser());
 
 app.use(
     cors({
-        origin:"http://localhost:3000",
+        origin:"*",
         credentials:true
     })
 )
